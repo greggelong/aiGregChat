@@ -124,7 +124,7 @@ Contextual Insights:
         { role: "user", content: inputText },
       ],
       seed: 42,
-      jsonMode: true,
+      jsonMode: false,
       model: "mistral",
     }),
   })
