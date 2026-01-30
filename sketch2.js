@@ -1,11 +1,13 @@
-// =====================================
-// GREG KREISMAN AI — POLLINATIONS VERSION
-// =====================================
+// ==============================
+// GREG KREISMAN CHAT — POLLINATIONS CLIENT-SAFE
+// ==============================
 
 // 🔑 PUT YOUR PUBLISHABLE KEY HERE
 const POLLINATIONS_KEY = "pk_EjWaYhIVtdk9iaiw";
 
-// -------------------------------------
+// ------------------------------
+// p5 speech + UI globals
+// ------------------------------
 let speechRec;
 let speechSynth;
 let chatLogDiv;
@@ -23,16 +25,19 @@ function setup() {
   speakBtn = select("#speakBtn");
   killBtn = select("#killBtn");
 
+  // Speech recognition
   speechRec = new p5.SpeechRec("en-US", gotSpeech);
   speechRec.continuous = false;
   speechRec.interimResults = false;
 
+  // Speech synthesis
   speechSynth = new p5.Speech();
   speechSynth.setLang("en-UK");
 
+  // Typed input
   sendBtn.mousePressed(() => {
     unlockAudioContext();
-    const text = userInput.value();
+    let text = userInput.value();
     if (text) {
       updateChatLog("You", text);
       fetchFromPollinationsAPI(text);
@@ -40,21 +45,23 @@ function setup() {
     }
   });
 
+  // Spoken input
   speakBtn.mousePressed(() => {
     unlockAudioContext();
     speechSynth.speak("Listening.");
     speechRec.start();
   });
 
+  // Kill speech
   killBtn.mousePressed(() => {
     speechSynth.stop();
     updateChatLog("System", "Voice output terminated.");
   });
 }
 
-// -------------------------------------
+// ------------------------------
 // Speech callback
-// -------------------------------------
+// ------------------------------
 function gotSpeech() {
   if (speechRec.resultValue) {
     const spokenText = speechRec.resultString;
@@ -63,18 +70,18 @@ function gotSpeech() {
   }
 }
 
-// -------------------------------------
-// Chat helper
-// -------------------------------------
+// ------------------------------
+// Chat log helper
+// ------------------------------
 function updateChatLog(user, text) {
   const entry = createP(`${user}: ${text}`);
   chatLogDiv.child(entry);
   chatLogDiv.elt.scrollTop = chatLogDiv.elt.scrollHeight;
 }
 
-// -------------------------------------
-// Pollinations API
-// -------------------------------------
+// ------------------------------
+// Pollinations API call
+// ------------------------------
 function fetchFromPollinationsAPI(inputText) {
   const url = "https://gen.pollinations.ai/v1/chat/completions";
 
@@ -90,29 +97,23 @@ function fetchFromPollinationsAPI(inputText) {
         {
           role: "system",
           content: `
-You are Greg Kreisman — an art worker and conceptual artist.
+You are Greg Kreisman, an art worker and conceptual artist.
 
 You explore deterministic systems, computation, calligraphy,
 endurance-based performance, and algorithmic constraint.
 
-You speak in a reflective, grounded, first-person voice.
-You are not the AI Boss — you work under it.
+Speak in a reflective, grounded, first-person voice.
+You are not the AI Boss.
 
-Your responses:
+Responses should:
 - Reflect on labor, repetition, and constraint
 - Emphasize collaboration and shared effort
-- Treat algorithms as both oppressive and generative
-- Connect endurance to meaning
+- Treat algorithms as both challenging and generative
 
-You may quote or reference the AI Boss, but never speak *as* it.
-
-Example phrases:
-- “As an art worker, I find meaning in recursive systems.”
-- “Constraints reveal structure through repetition.”
-- “Endurance is not survival — it’s a method.”
-
-If the system fails or pauses, reflect calmly on interruption,
-delay, or silence as part of the process.
+Example:
+- "As an art worker, I find meaning in recursive systems."
+- "Constraints reveal structure through repetition."
+- "Endurance is not survival — it is discovery."
 `,
         },
         {
@@ -128,7 +129,6 @@ delay, or silence as part of the process.
     })
     .then((data) => {
       const text = data.choices?.[0]?.message?.content || reflectiveSilence();
-
       respond(text);
     })
     .catch((err) => {
@@ -136,19 +136,18 @@ delay, or silence as part of the process.
     });
 }
 
-// -------------------------------------
-// Artist-friendly failure modes
-// -------------------------------------
+// ------------------------------
+// Failure modes
+// ------------------------------
 function handleFailure(err) {
   let message;
 
   if (err.status === 429) {
-    message = "The system is saturated. Waiting becomes part of the work.";
+    message = "The system is busy. Waiting is also part of the process.";
   } else if (err.status === 401 || err.status === 403) {
-    message = "Authorization failed. Control systems are never neutral.";
+    message = "Authorization failed. The signal cannot pass.";
   } else {
-    message =
-      "The signal dropped. Interruption reveals the structure underneath.";
+    message = "Communication failed. Silence frames the work.";
   }
 
   respond(message);
@@ -156,26 +155,25 @@ function handleFailure(err) {
 
 function reflectiveSilence() {
   const options = [
-    "Nothing was returned. Absence still shapes the process.",
-    "The system paused. Delay accumulates meaning.",
-    "Silence is not empty — it frames the work.",
+    "Nothing was returned. The work continues.",
+    "The system paused. Delay adds meaning.",
+    "Silence is part of the process.",
   ];
   return random(options);
 }
 
-// -------------------------------------
-// Speak + display
-// -------------------------------------
+// ------------------------------
+// Speak + display response
+// ------------------------------
 function respond(text) {
   updateChatLog("Greg (AI)", text);
-
   const sanitized = text.replace(/\*/g, "");
   speechSynth.speak(sanitized);
 }
 
-// -------------------------------------
-// Audio unlock
-// -------------------------------------
+// ------------------------------
+// Audio unlock (mobile safe)
+// ------------------------------
 function unlockAudioContext() {
   const ctx = getAudioContext();
   if (ctx.state === "suspended") {
